@@ -5,6 +5,7 @@
   "main": "bamazonCustomer.js",
   "dependencies": {
     "babel-eslint": "^8.2.3",
+    "inquirer": "^5.2.0",
     "mysql": "^2.15.0",
     "prettier-eslint": "^8.8.1"
   },

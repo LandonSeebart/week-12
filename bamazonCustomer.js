@@ -1,72 +1,58 @@
-var mysql = require("mysql");
-var inquirer = require('inquirer');
-var products = require("./products")
+const mysql = require('mysql');
+const inquirer = require('inquirer');
+const products = require('./products');
 
-var connection = mysql.createConnection({
-  host: "localhost",
+const connection = mysql.createConnection({
+  host: 'localhost',
   port: 3306,
-  user: "root",
-  password: "6TacoMoose!",
-  database: "bamazonDB"
+  user: 'root',
+  password: '6TacoMoose!',
+  database: 'bamazonDB',
 });
 
-connection.connect(function(err) {
+connection.connect((err) => {
   if (err) throw err;
-  console.log("connected as id " + connection.threadId);
-  getUserSelectionFrom(products)
+  console.log(`connected as id ${connection.threadId}`);
+  getUserSelection();
 });
 
-function getUserSelectionFrom(list) {
-
-  choiceArray = productInfoArrBuilder(list);
-
-  inquirer.prompt([
-    {
-    type: "list",
-    name: "item",
-    message: "What would you like to buy?",
-    choices: choiceArray
-    },
-    {
-      type: "input",
-      name: "quantity",
-      message: "How many?"
-    }
-  ]).then(answers => {
-   let userSelection = userSelectionCleaner(answers.item)
-   console.log(userSelection);
-   let stockAvailible = getProductQuantity(userSelection)
-
-   if (stockAvailible - answers.quantity < 1) {
-    console.log("Insufficient quantity!");
-    } else {
-      console.log("done!");
-    }
-  });
-}
-
-function productInfoArrBuilder(arr) {
-
-  let productInfo = []
-  for (let i = 0; i < arr.length; i++) {
-    productInfo.push(`${arr[i].product_name} : $${arr[i].price}`);
-  }
-
-  return (productInfo)
-}
-
-function userSelectionCleaner(arg) {
-
-  let userItemArr = arg.split(':')
-  let userItemName = userItemArr[0]
-  return(userItemName);
-
-}
-
-function getProductQuantity(productName) {
-  const query = `SELECT stock_quantity FROM products WHERE ?`;
-    connection.query(query, { product_name: productName  }, function(err, res) {
+function getUserSelection() {
+  const query = 'SELECT product_name, price FROM products';
+  const choiceArray = connection.query(query, (err, res) => {
+    if (err) throw err;
+    const choiceArray = res.map(element => ({
+      name: `${element.product_name} : ${element.price}`,
+      value: element.product_name,
+    }));
+    inquirer.prompt([
+      {
+        type: 'list',
+        name: 'item',
+        message: 'What would you like to buy?',
+        choices: choiceArray,
+      },
+      {
+        type: 'input',
+        name: 'quantity',
+        message: 'How many?',
+      },
+    ]).then((answers) => {
+      const userSelection = answers.item;
+      const query = 'SELECT * FROM products WHERE ?';
+      connection.query(query, { product_name: userSelection }, (err, res) => {
         if (err) throw err;
-        console.log(res[0].stock_quantity)
+        const stockAvailable = (res[0].stock_quantity);
+        if (stockAvailable - answers.quantity < 1) {
+          console.log('Insufficient quantity!');
+          getUserSelection();
+        } else {
+            const query = "UPDATE products SET stock_quantity = '10' WHERE ?";
+            connection.query(query, { product_name: productName }, (err, res) => {
+              if (err) throw err;
+              console.log(`${res} - ${res.affectedRows} updated`);
+            }
+          }
+      });
     });
+  });
 }

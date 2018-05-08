@@ -1,6 +1,6 @@
 const products = [
   {
-    product_name: "Coloring Book",
+    product_name: "Coloring book",
     department_name: "Books",
     price: 10.00,
     stock_quantity: 100,

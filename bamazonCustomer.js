@@ -1,6 +1,5 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
-const products = require('./products');
 
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -39,19 +38,25 @@ function getUserSelection() {
     ]).then((answers) => {
       const userSelection = answers.item;
       const query = 'SELECT * FROM products WHERE ?';
+
       connection.query(query, { product_name: userSelection }, (err, res) => {
         if (err) throw err;
+
         const stockAvailable = (res[0].stock_quantity);
-        if (stockAvailable - answers.quantity < 1) {
+        const amountPurchased = answers.quantity;
+        const updatedQuantity = stockAvailable - amountPurchased;
+        if (updatedQuantity < 1) {
           console.log('Insufficient quantity!');
           getUserSelection();
         } else {
-            const query = "UPDATE products SET stock_quantity = '10' WHERE ?";
-            connection.query(query, { product_name: productName }, (err, res) => {
-              if (err) throw err;
-              console.log(`${res} - ${res.affectedRows} updated`);
-            }
-          }
+          const query = `UPDATE products SET stock_quantity = ${updatedQuantity} WHERE ?`;
+
+          connection.query(query, { product_name: userSelection }, (err, res) => {
+            if (err) throw err;
+            console.log('All yours!');
+          });
+          connection.end();
+        }
       });
     });
   });

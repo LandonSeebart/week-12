@@ -16,11 +16,3 @@ connection.connect((err) => {
   connection.end();
 });
 
-
-function setProductQuantity(productName) {
-  const query = "UPDATE products SET stock_quantity = '10' WHERE ?";
-  connection.query(query, { product_name: productName }, (err, res) => {
-    if (err) throw err;
-    console.log(`${res} - ${res.affectedRows} updated`);
-  });
-}
